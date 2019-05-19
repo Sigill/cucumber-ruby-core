@@ -20,8 +20,15 @@ module Cucumber
 
         def execute(*args)
           @timer.start
-          @block.call(*args)
-          passed
+          invoke_result = @block.call(*args)
+
+          if invoke_result.nil? then
+            return passed()
+          elsif invoke_result.is_a?(Cucumber::InvokeResult)
+            return invoke_result.to_result(@timer.duration)
+          else
+            return passed()
+          end
         rescue Result::Raisable => exception
           exception.with_duration(@timer.duration)
         rescue Exception => exception
@@ -38,8 +45,8 @@ module Cucumber
 
         private
 
-        def passed
-          Result::Passed.new(@timer.duration)
+        def passed(params = {})
+          Result::Passed.new(@timer.duration, params)
         end
 
         def failed(exception)
